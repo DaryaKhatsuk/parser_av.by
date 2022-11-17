@@ -44,7 +44,6 @@ def parser():
             print(f'Parsing {page}')
             html = get_html(URL, params='%page=' + str(page + 1))
             cads.extend(get_content(html.text))
-        # print(cads)
     else:
         print("Error")
 
