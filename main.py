@@ -22,15 +22,13 @@ def get_content(html):
     cards = []
     for item in items:
         cards.append(
-            {
-                # 'img_car': item.find('img', class_=' ls-is-cached lazyloaded').get_text(),
-                'title_car': item.find('span', class_='link-text').get_text(),
-                'href_car': item.find('a', class_='listing-item__link').get_text(),
-                'price_car': item.findNext('div', class_='listing-item__price'),
-
-            }
+            dict(title_car=item.find('span', class_='link-text').text,
+                 href_car=item.find('a', class_='listing-item__link').get('href'),
+                 price_car_byn=item.find('div', class_='listing-item__price').text.encode('ascii', errors='ignore').decode('UTF-8'),
+                 price_car_usd=item.find('div', class_='listing-item__priceusd').text.replace('\xa0', ' '))
         )
-        print(cards)
+
+    print(cards)
 
     return cards
 
@@ -40,13 +38,13 @@ def parser():
     html = get_html(URL)
     if html.status_code == 200:
         cads = []
-        for page in range(1, PAGENATION +1):
+
+        for page in range(1, PAGENATION + 1):
             print(f'Parsing {page}')
-            html = get_html(URL, params='%page=' + str(page + 1))
+            html = get_html(URL, params='&page=' + str(page + 1))
             cads.extend(get_content(html.text))
     else:
         print("Error")
 
 
 parser()
-
