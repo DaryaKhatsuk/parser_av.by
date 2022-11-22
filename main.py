@@ -1,8 +1,10 @@
 import csv
 import json
+import time
 
 import bs4
 import requests
+import asyncio
 
 JSON = 'cars.json'
 CSV = 'cars.csv'
@@ -49,7 +51,7 @@ def safe_doc(items, path):
 
         for item in items:
             with open('cars.csv', 'a+', newline='', encoding='UTF=8') as csvfile:
-                csvF = csv.writer(csvfile, delimiter=' ', quotechar=' ', quoting=csv.QUOTE_MINIMAL)
+                csvF = csv.writer(csvfile, delimiter=',', quotechar=' ', quoting=csv.QUOTE_ALL)
                 csvF.writerow(item.values())
             sl.update(
                 {
@@ -65,7 +67,7 @@ def safe_doc(items, path):
 
 
 def parser():
-    PAGENATION = int(input('Pages: '))
+    PAGENATION = 1
     html = get_html(URL)
     if html.status_code == 200:
         cards = []
@@ -78,4 +80,7 @@ def parser():
         print("Error")
 
 
+x = time.time()
 parser()
+y = time.time()
+print(y-x)
