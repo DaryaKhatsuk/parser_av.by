@@ -6,6 +6,9 @@ import time
 import aiohttp
 from bs4 import BeautifulSoup
 
+"""
+Парсрер собирает данные об названии мотоциклов, ссылки на страницы товаров, их ценах в бел. руб. и usd, а так же их описание. 
+"""
 JSON = 'cars.json'
 CSV = 'cars.csv'
 HOST = 'https://av.by/'
@@ -16,8 +19,13 @@ HEADERS = {
 }
 
 
-async def get_content(html):
-    soup = BeautifulSoup(await html, 'html.parser')
+async def get_content(session_request):
+    """
+
+    :param session_request:
+    :return:
+    """
+    soup = BeautifulSoup(await session_request, 'html.parser')
     items = soup.find_all('div', class_='listing-item__wrap')
     cards = []
     for item in items:
@@ -51,6 +59,11 @@ async def get_content(html):
 
 
 def safe_doc(items):
+    """
+
+    :param items:
+    :return:
+    """
     with open(JSON, 'a+', newline='', encoding='UTF-8') as file:
         sl = {}
         sc = 1
@@ -73,15 +86,19 @@ def safe_doc(items):
 
 
 async def parser():
+    """
+
+    :return:
+    """
     async with aiohttp.ClientSession() as session:
-        html = await session.get(url=URL, headers=HEADERS)
-        if html.status == 200:
+        session_request = await session.get(url=URL, headers=HEADERS)
+        if session_request.status == 200:
             counter = 1
             while True:
-                html = await session.get(url=URL + '&page=' + str(counter))
+                session_request = await session.get(url=URL + '&page=' + str(counter))
                 print(f'Parsing page {counter}')
-                if html.status == 200:
-                    asyncio.create_task(get_content(html.text()))
+                if session_request.status == 200:
+                    asyncio.create_task(get_content(session_request.text()))
                     counter += 1
                 else:
                     break
