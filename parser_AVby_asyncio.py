@@ -7,7 +7,10 @@ import aiohttp
 from bs4 import BeautifulSoup
 
 """
-Парсрер собирает данные об названии мотоциклов, ссылки на страницы товаров, их ценах в бел. руб. и usd, а так же их описание. 
+:JSON, CSV: переменные содержащие названия файлов в проекте форматов .json и .csv.
+:HOST: host сайта.
+:URL: url раздела, в котором производится парсинг.
+:HEADERS: искать в главном домене раздела "сеть"/"network" консоли браузера.
 """
 JSON = 'cars.json'
 CSV = 'cars.csv'
@@ -21,9 +24,13 @@ HEADERS = {
 
 async def get_content(session_request):
     """
-
-    :param session_request:
-    :return:
+    :param session_request: получает всю html информацию со страницы от функции parser.
+    :soup: берет данный со страницы отправленные функцией parser
+    :items: собирает со всей страницы все div классы под названием listing-item__wrap
+    :AttributeError: обрабатывает отсутствие в карточках описания, т.к. это необязательный для
+     заполнения пользователем параметр.
+    :Exception: общее исключение для обработки внезапных ошибок.
+    :return: safe_doc(cards), передает данные для сохранения в форматах json и csv
     """
     soup = BeautifulSoup(await session_request, 'html.parser')
     items = soup.find_all('div', class_='listing-item__wrap')
@@ -31,7 +38,7 @@ async def get_content(session_request):
     for item in items:
         try:
             title_car = item.find('span', class_='link-text').text
-            href_car = ['https://moto.av.by' + item.find('a', class_='listing-item__link').get('href')]
+            href_car = 'https://moto.av.by' + item.find('a', class_='listing-item__link').get('href')
             price_car_byn = item.find('div', class_='listing-item__price').text.replace('\xa0', ' ').replace(
                 '\u2009', ' ')
             price_car_usd = item.find('div', class_='listing-item__priceusd').text.replace('\xa0', ' ').replace(
@@ -60,9 +67,8 @@ async def get_content(session_request):
 
 def safe_doc(items):
     """
-
-    :param items:
-    :return:
+    :param items: принимает список со вложенными словарями, в которых хранятся данные о товаре.
+    :return: запись в json и csv файлы.
     """
     with open(JSON, 'a+', newline='', encoding='UTF-8') as file:
         sl = {}
@@ -79,31 +85,33 @@ def safe_doc(items):
             )
             sc += 1
         json.dump(sl, file, indent=4, ensure_ascii=False)
-    with open(CSV, 'a+', newline='', encoding='UTF=8') as csvfile:
-        for item in items:
-            csvF = csv.writer(csvfile, delimiter=',', quotechar=' ', quoting=csv.QUOTE_ALL)
-            csvF.writerow(item.values())
+    # with open(CSV, 'a+', newline='', encoding='UTF=8') as csvfile:
+    #     for item in items:
+    #         csvF = csv.writer(csvfile, delimiter=',', quotechar=' ', quoting=csv.QUOTE_ALL)
+    #         csvF.writerow(item.values())
 
 
 async def parser():
     """
-
-    :return:
+    :async with aiohttp.ClientSession(): позволяет использовать одну сессию несколько раз.
+    :session_request (первый): использует данные url и headers сети.
+    :session_request.status == 200: проверяет что бы статус подключения на странице был 200,
+     т.е. существующей, не пустой страницей.
+    :counter: является счетчиком для отсчитывания страниц, в виду использования цикла while
+    :session_request (второй): подставляет в открытую сессию точные данные страницы, которую нужно спарсить сейчас.
+    :asyncio.create_task(get_content(session_request.text())): создает асинхронную задачу передачи данных со страницы,
+     в виде текста, в функцию get_content.
     """
     async with aiohttp.ClientSession() as session:
         session_request = await session.get(url=URL, headers=HEADERS)
-        if session_request.status == 200:
-            counter = 1
-            while True:
-                session_request = await session.get(url=URL + '&page=' + str(counter))
-                print(f'Parsing page {counter}')
-                if session_request.status == 200:
-                    asyncio.create_task(get_content(session_request.text()))
-                    counter += 1
-                else:
-                    break
+        counter = 1
+        while session_request.status == 200:
+            session_request = await session.get(url=URL + '&page=' + str(counter))
+            print(f'Parsing page {counter}')
+            asyncio.create_task(get_content(session_request.text()))
+            counter += 1
         else:
-            print("Error")
+            print(f"Session status: {session_request.status}. Finish")
 
 
 x = time.time()
