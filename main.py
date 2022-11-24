@@ -55,7 +55,7 @@ def get_content(html):
 
 
 def safe_doc(items):
-    with open(JSON, 'a+', newline='', encoding='UTF-8') as file:
+    with open(JSON, 'w', newline='', encoding='UTF-8') as file:
         sl = {}
         sc = 1
         for item in items:
