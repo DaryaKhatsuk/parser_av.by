@@ -98,22 +98,17 @@ class ParserAV:
          т.е. существующей, не пустой страницей.
         :counter: является счетчиком для отсчитывания страниц, в виду использования цикла while
         :session_request (второй): подставляет в открытую сессию точные данные страницы, которую нужно спарсить сейчас.
-        :asyncio.create_task(get_content(session_request.text())): создает асинхронную задачу передачи данных со страницы,
-         в виде текста, в функцию get_content.
+        :asyncio.create_task(get_content(session_request.text())): создает асинхронную задачу передачи данных со
+         страницы, в виде текста, в функцию get_content.
         """
         async with aiohttp.ClientSession() as session:
             session_request = await session.get(url=self.URL, headers=self.HEADERS)
             counter = 1
-            x = time.time()
-            print(x)
             while session_request.status == 200:
                 session_request = await session.get(url=self.URL + '&page=' + str(counter))
                 print(f'Parsing page {counter}')
                 asyncio.create_task(self.get_content(session_request.text()))
-                if counter % 20 == 0:
-                    print(time.time() - x)
                 counter += 1
-
             else:
                 print(f"Session status: {session_request.status}. Data is being saved.")
                 self.safe_doc()
