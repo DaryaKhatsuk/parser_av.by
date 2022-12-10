@@ -28,7 +28,7 @@ class ParserAV:
         self.cards = []
         self.count = 0
 
-    async def get_content(self, session_request, mess):
+    async def get_content(self, session_request):
         """
         :param session_request: получает всю html информацию со страницы от функции parser.
         :soup: берет данный со страницы отправленные функцией parser
@@ -38,36 +38,22 @@ class ParserAV:
         :Exception: общее исключение для обработки внезапных ошибок.
         :return: safe_doc(cards), передает данные для сохранения в форматах json и csv
         """
-        bike_rus = {'АВМ', 'Альфамото', 'Восход', 'Днепр', 'ЗиД', 'ИЖ', 'Минск', 'Урал', 'Эксклюзив'}
-        moto_rus = {
-            'АВМ': 'avm',
-            'Альфамото': 'alfamoto',
-            'Восход': 'voshod',
-            'Днепр': 'dnepr',
-            'ЗиД': 'zid',
-            'ИЖ': 'izh',
-            'Минск': 'minsk',
-            'Урал': 'ural',
-            'Эксклюзив': 'eksklyuziv',
-        }
-        if mess in bike_rus:
-            mess = moto_rus.get(mess)
-        soup = BeautifulSoup(await session_request, 'lxml')
+        soup = BeautifulSoup(await session_request, 'html.parser')
         items = soup.find_all('div', class_='listing-item__wrap')
         for item in items:
             try:
-                title_car = item.find('a', class_='catalog__link').text
+                title_car = item.find('span', class_='link-text').text
                 href_car = 'https://moto.av.by' + item.find('a', class_='listing-item__link').get('href')
                 price_car_byn = item.find('div', class_='listing-item__price').text.replace('\xa0', ' ').replace(
                     '\u2009', ' ')
                 price_car_usd = item.find('div', class_='listing-item__priceusd').text.replace('\xa0', ' ').replace(
                     '\u2009', ' ')
-                message_car = item.findNext('div', class_='listing-item__message').text.replace('\n', ' ') \
-                    .replace('\\', '/').replace('\xa0', ' ')
+                params_car = item.findNext('div', class_='listing-item__params').text.replace('\n', ' ').replace(
+                    '\u2009', ' ').replace('\xa0', ' ')
                 card = {'title_car': title_car, 'href_car': href_car, 'price_car_byn': price_car_byn,
-                        'price_car_usd': price_car_usd, 'message_car': message_car}
-                print(title_car)
-                self.cards.append(title_car)
+                        'price_car_usd': price_car_usd, 'params_car': params_car}
+                print(card)
+                self.cards.append(card)
             except AttributeError:
                 title_car = item.find('span', class_='link-text').text
                 href_car = ['https://moto.av.by' + item.find('a', class_='listing-item__link').get('href')]
@@ -76,9 +62,9 @@ class ParserAV:
                 price_car_usd = item.find('div', class_='listing-item__priceusd').text.replace('\xa0', ' ').replace(
                     '\u2009', ' ')
                 card = {'title_car': title_car, 'href_car': href_car, 'price_car_byn': price_car_byn,
-                        'price_car_usd': price_car_usd, 'message_car': 'Pass'}
+                        'price_car_usd': price_car_usd, 'params_car': 'Pass'}
                 self.cards.append(card)
-                print(f'message_car: pass')
+                print(f'params_car: pass\n{card}')
             except Exception as ex:
                 print(f'Some {ex} here.')
 
@@ -121,7 +107,7 @@ class ParserAV:
             while session_request.status == 200:
                 session_request = await session.get(url=self.URL + '&page=' + str(counter))
                 print(f'Parsing page {counter}')
-                asyncio.create_task(self.get_content(session_request.text(), 'Apollo'))
+                asyncio.create_task(self.get_content(session_request.text()))
                 counter += 1
             else:
                 print(f"Session status: {session_request.status}. Data is being saved.")
