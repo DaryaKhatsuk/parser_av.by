@@ -38,8 +38,8 @@ def parse(html):
             soup_find = soup.find('span', class_='dropdown-floatlabel__value').text.replace(' ', '')
             # Сравнивает полученное название с объектами сета
             if soup_find in br:
-                print(f'-{soup_find}-')
                 control += 1
+                print(f'№{control}\n-{soup_find}-')
                 for i in range(1, count_s + 1):
                     # Создаем суп из страницы, находим все цены и поочередно добавляем в список.
                     # Повторяем пока страницы не кончатся
