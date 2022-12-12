@@ -1,12 +1,9 @@
 import asyncio
-import lxml
 import csv
 import json
 import time
-import re
 import aiohttp
 from bs4 import BeautifulSoup
-import time
 
 
 class ParserAV:
